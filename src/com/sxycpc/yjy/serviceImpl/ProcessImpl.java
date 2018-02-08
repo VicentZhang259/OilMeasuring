@@ -5,6 +5,8 @@ package com.sxycpc.yjy.serviceImpl;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import org.jfree.chart.ChartFrame;
@@ -22,16 +24,16 @@ import com.sxycpc.yjy.util.RegressionLine;
  */
 public class ProcessImpl implements InitProcess {
 	
-	final double Swi=0.2433;
-	final double Sor=0.2417;
-	final double N = 1134;
-	final double U0 = 1.84;
-	final double P0 = 0.8;
-	final double B0 = 1.26;
+	final double Swi=0.295;
+	final double Sor=0.28;
+	final double N = 490;
+	final double U0 = 6.3;
+	final double P0 = 0.865;
+	final double B0 = 1.042;
 	final double Bw = 1;
 	final double Pw =1;
-	final double Uw = 0.4;
-	
+	final double Uw = 0.34;
+	final double Step = 0.1;
 	private List<Double> swList  = null;
 	private List<Double> kroList =null;
 	private List<Double> krwList = null;
@@ -47,7 +49,7 @@ public class ProcessImpl implements InitProcess {
 	
 
 	@Override
-	public void calculate() {
+	public void calculate(String filePath) {
 		// TODO Auto-generated method stub
 		//从excel中读取数据到容器
 		double a1 = 0;
@@ -57,23 +59,33 @@ public class ProcessImpl implements InitProcess {
 		List<ArrayList<String>> list =instance.readXls(file);
 		//进行一元线性回归计算
 		//List rowList = null;
-		double x = 0;
-		double y = 0;
+		double oilOneYear = 0;
+		double waterOneYear = 0;
+		double npOil = 0;
+		double x=0;
+		double y=0;
 		double wor =0;
 		double kro_krw = 0;
 		List<Double> worList = new ArrayList<Double>();
         RegressionLine line = new RegressionLine(); 
 		for(List<String> rowList:list) {
 			//rowList = list.iterator().next();
-			if("年份".equals(rowList.get(0).toString()) ){
+			if("年份".equals(rowList.get(0).toString()) || "".equals(rowList.get(0).toString()) ){
 				continue;
 			}
-			 x =(Double.parseDouble(rowList.get(2)));
-			 y =Math.log10(Double.parseDouble(rowList.get(3)));			
+			oilOneYear =(Double.parseDouble(rowList.get(2)));
+			 //y =Math.log10(Double.parseDouble(rowList.get(3)));
+			waterOneYear =(Double.parseDouble(rowList.get(3)));
+			npOil = (Double.parseDouble(rowList.get(4)));
+			wor =waterOneYear/oilOneYear;
+				worList.add(wor);
+				System.out.println("wor:"+wor);
+				x=npOil;
+				y=Math.log10(wor);
 			line.addDataPoint(new DataPoint(x, y)); 
-			wor =y/x;
-			worList.add(wor);
+			//wor =y/x;			
 		}
+		
 		b1 = line.getA1();
 		a1 = line.getA0();		
 		//进行1到4步的计算
@@ -86,9 +98,9 @@ public class ProcessImpl implements InitProcess {
 		double B =0;
 		double C =0;
 		
-		A = Math.exp(2.303*(a-b*N*Swi/(1-Swi)));
-		B =2.303*b*N;
-		C=Pw*U0*B0/P0*Uw*Bw;
+		A = Math.exp(2.303*(a-(b*N*Swi)/(1-Swi)));
+		B =2.303*b*N/(1-Swi);
+		C=Pw*U0*B0/(P0*Uw*Bw);
 		
 		System.out.println("a1"+a1+",b1:"+b1);
 		
@@ -109,13 +121,14 @@ public class ProcessImpl implements InitProcess {
 		for(double worTemp :worList) {
 			//worTemp = (Double)worList.listIterator().next();
 			sw =Math.log(worTemp/A)/B;
+			//第四步求得
 			kro_krw_temp = C/A*Math.exp(-B*sw);
 			//计算y
 			yList.add(Math.log10(kro_krw_temp));
 			swList.add(sw);
 			//计算x1
 			x1List.add(Math.log10((1-Sor-sw)/(1-Swi-Sor)));
-			x2List.add(Math.log10((sw-Swi)/(1-Swi-Sor)));
+			x2List.add(Math.log10((sw-Swi)/(1-Swi-Sor))*(-1));
 			kro_krwList.add(kro_krw_temp);
 		}
 		
@@ -132,31 +145,67 @@ public class ProcessImpl implements InitProcess {
 
 			System.out.println(i+"->x1List"+x1List.get(i)+",x2List"+x2List.get(i)+",yList"+yList.get(i));
 		}
-	  	MultiLinearRegression mlr = new MultiLinearRegression(x1List,x2List,yList,0.001,1000000);
-	  	paraAlpha = mlr.getTheta()[0];
+	  	MultiLinearRegression mlr = new MultiLinearRegression(x1List,x2List,yList,0.001,1000000);  	
 	  	mlr.trainTheta();
+	  	paraAlpha = mlr.getTheta()[0]*(-1);
 	  	paraM = mlr.getTheta()[1];
 	  	paraN = mlr.getTheta()[2];
+	  	mlr.printTheta();
 	  	//
 	  	//mlr.printTrainData();
 	  	
 	  //	mlr.printTheta();
 	  	
-	  	System.out.println("M:"+paraM +",N:"+paraM);
+	  	System.out.println("Alpha:"+paraAlpha+",M:"+paraM +",N:"+paraM);
 
 	  	
+	        // 利用步长补充点到边缘
+	 		//sw的最小值为swi，最大值为1-sor
+	 		double leftTemp = swList.get(0);
+	 		double rightTemp = swList.get(swList.size()-1);
+	 		//向左
+	 		while((leftTemp-Step)>Swi) {
+	 			leftTemp= leftTemp-Step;
+	 			swList.add(leftTemp);
+	 		}
+	 		swList.add(Swi);
+	  	
+	 		//向右
+	 		while((leftTemp-Step)>(1-Sor)) {
+	 			leftTemp= leftTemp-Step;
+	 			swList.add(leftTemp);
+	 		}
+	 		swList.add(1-Sor);
+	 		
+	 		//排序
+	 		Collections.sort(swList,new Comparator<Double>(){
+	          
+				@Override
+				public int compare(Double o1, Double o2) {
+					// TODO Auto-generated method stub
+					return o1.compareTo(o2);
+				}
+	         });
+
+	 		for(int i =0;i<swList.size();i++) {
+
+				System.out.println(i+"->sw2List"+swList.get(i));
+			}	
 		//第6步 求出kro和krw
 	  	
 		kroList = new ArrayList<Double>();
 	    krwList = new ArrayList<Double>();
 	  	double kro_swi=1.0;
-	  	double krw_sor =(1/Math.pow(10,paraAlpha )); 
+	  	double krw_sor =(1/Math.pow(10,paraAlpha ));
+	  	System.out.println("krw_sor:"+krw_sor );	 	  	
 	  	
 	  	for(double swTmp:swList) {
 	  	kroList.add( kro_swi*Math.pow((1-Sor-swTmp)/(1-Sor-Swi), paraM));
 	  	krwList.add(krw_sor*Math.pow((swTmp-Swi)/(1-Sor-Swi), paraN));
 	  	}	
 	  	System.out.println("kro:"+ kroList.toString()+"\nKrw"+krwList.toString());
+	  		     		
+		
 	}
 	
 	
@@ -196,7 +245,7 @@ public class ProcessImpl implements InitProcess {
 //			List<ArrayList<String>> list =instance.readXls(file);
 //			System.out.println(list.toString());
 			ProcessImpl process = new ProcessImpl();
-			process.calculate();
+			process.calculate("");
 
 	  }  
 }
