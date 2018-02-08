@@ -51,6 +51,8 @@ public class InitShellPanel extends JPanel{
 	
 	private JFileChooser fileChooser = null;
 	
+	private ChartPanel cp =null;
+	
 	JPanel panelParent =null;
 	JPanel panelChar = null;
 	JFreeChart charLine =null;
@@ -131,7 +133,7 @@ public class InitShellPanel extends JPanel{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int returnVal = getFile("XLS");
+				int returnVal = getFile("xls");
 				if(returnVal == 0) {
 					filePathText.setText(fileChooser.getSelectedFile().getPath());
 				}
@@ -145,7 +147,10 @@ public class InitShellPanel extends JPanel{
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				//start to process
-				process.calculate();
+				if(null ==fileChooser.getSelectedFile().getPath()){
+					return;
+				}
+				process.calculate(fileChooser.getSelectedFile().getPath());
 				kroList =process.getKroList();
 				krwList = process.getKrwList();
 				swList = process.getSwList();
@@ -155,17 +160,17 @@ public class InitShellPanel extends JPanel{
 				  XYSeries xyseriesKrw = new XYSeries("krw");
 				for(int i = 0;i<kroList.size();i++) {
 					
-					xyseriesKro.add(kroList.get(i).intValue(), swList.get(i).intValue()); 
+					xyseriesKro.add(swList.get(i).doubleValue(),kroList.get(i).doubleValue()); 
 				}
 				for(int i = 0;i<krwList.size();i++) {
-					xyseriesKrw.add(krwList.get(i).doubleValue(), swList.get(i).doubleValue()); 
+					xyseriesKrw.add(swList.get(i).doubleValue(),krwList.get(i).doubleValue()); 
 				}
 				dataSet = new XYSeriesCollection();
 				dataSet.addSeries(xyseriesKro);
 				dataSet.addSeries(xyseriesKrw);
 				//CharLine.getInstance().setUserDataSet(dataSet);
 				charLine = CharLine.getInstance().createChart(dataSet);
-				ChartPanel cp = new ChartPanel(charLine);
+				cp = new ChartPanel(charLine);
 				panelChar.add(cp,BorderLayout.CENTER);
 				panelChar.validate();
 				//cp.validate();

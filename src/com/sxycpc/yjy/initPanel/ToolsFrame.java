@@ -3,8 +3,11 @@
  */
 package com.sxycpc.yjy.initPanel;
 
+import java.awt.Toolkit;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
 import javax.swing.JTabbedPane;
 
 /**
@@ -32,10 +35,18 @@ public class ToolsFrame extends JFrame{
 		setSize(DEFAULT_WIDTH,DEFAULT_HIGH);
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("根据测算数据源文件测算测量结果", InitShellPanel.getInstance());
+		this.setIconImage(Toolkit.getDefaultToolkit().createImage("log.jpg"));
+		this.getRootPane().setWindowDecorationStyle(JRootPane.NONE); 
 		add(tabbedPane,"Center");
 	}
 	
 	public static void setDialog(String message) {
+		initFrame.setIconImage(Toolkit.getDefaultToolkit().createImage("log.jpg"));
+		initFrame.setUndecorated(true);
+
+        //采用指定的窗口装饰风格
+
+		initFrame.getRootPane().setWindowDecorationStyle(JRootPane.NONE); 
 		JOptionPane.showMessageDialog(initFrame, message);
 		
 	}
