@@ -4,6 +4,8 @@
 package com.sxycpc.yjy.initPanel;
 
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -21,8 +23,8 @@ public class ToolsFrame extends JFrame{
 	 */
 	private static final long serialVersionUID = 1L;
 	
-	private final int DEFAULT_WIDTH = 700;
-	private final int DEFAULT_HIGH = 450;
+	private final int DEFAULT_WIDTH = 1000;
+	private final int DEFAULT_HIGH = 800;
 	
 	private static ToolsFrame  initFrame = new ToolsFrame();
 	
@@ -38,7 +40,20 @@ public class ToolsFrame extends JFrame{
 		this.setIconImage(Toolkit.getDefaultToolkit().createImage("log.jpg"));
 		this.getRootPane().setWindowDecorationStyle(JRootPane.NONE); 
 		add(tabbedPane,"Center");
+		this.addWindowListener(new WindowAdapter(){
+			@Override
+			 public void windowClosing(WindowEvent e)
+	            {
+	                // 释放资源，退出程序
+	                  System.exit(0);
+	                   dispose();
+	                setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	            }
+		});
+		
 	}
+	
+	
 	
 	public static void setDialog(String message) {
 		initFrame.setIconImage(Toolkit.getDefaultToolkit().createImage("log.jpg"));
@@ -50,5 +65,16 @@ public class ToolsFrame extends JFrame{
 		JOptionPane.showMessageDialog(initFrame, message);
 		
 	}
+	
+	/*ToolsFrame.addWindowListener(new WindowAdapter()
+    {
+            public void WindowClosing(WindowEvent e)
+            {
+                // 释放资源，退出程序
+                  System.exit(0);
+                   dispose();
+                //setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            }
 
+    }); */
 }

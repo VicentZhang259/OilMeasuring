@@ -8,5 +8,5 @@ package com.sxycpc.yjy.service;
  *
  */
 public interface InitProcess {
-void calculate();
+void calculate(String filePath);
 }

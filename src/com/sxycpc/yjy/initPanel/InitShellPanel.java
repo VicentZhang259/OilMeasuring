@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -56,10 +58,17 @@ public class InitShellPanel extends JPanel{
 	JPanel panelParent =null;
 	JPanel panelChar = null;
 	JFreeChart charLine =null;
-	 XYSeriesCollection dataSet =null;
+	XYSeriesCollection dataSet =null;
 	 List<Double> kroList = null;
      List<Double> krwList = null;
      List<Double> swList = null;
+     
+     JPanel panelResult = null;
+     
+     /**
+      * 用以显示 计算结果
+      */
+     JTextArea resultText = null;
 	
 	//ProcessImpl process = new ProcessImpl();
 	ProcessImpl process = new ProcessImpl();
@@ -87,7 +96,7 @@ public class InitShellPanel extends JPanel{
 		add(panelParent);
 		JPanel panel1 = new JPanel();
 		JPanel panel2 = new JPanel();
-		JPanel panelResult = new JPanel();
+		panelResult = new JPanel();
 		panelParent.add(panel1);
 		panelParent.add(panel2);
 		JLabel filePathLabel = new JLabel("测算数据的文件路径");
@@ -103,7 +112,11 @@ public class InitShellPanel extends JPanel{
 		panel2.add(cancelButton);
 		
 		JLabel resultLabel = new JLabel("计算结果");
-		JTextField resultText = new JTextField("未开始计算",40);
+		resultText = new JTextArea(50,50);
+		
+		/*Dimension dm = new Dimension();
+		dm.setSize(50, 50);
+		resultText.setPreferredSize(dm);*/
 		panelResult.add(resultLabel);
 		panelResult.add(resultText);
 		
@@ -118,8 +131,7 @@ public class InitShellPanel extends JPanel{
 		
 		
 		add(panelChar);
-		
-		
+				
 	}
 	
 	/**
@@ -150,6 +162,7 @@ public class InitShellPanel extends JPanel{
 				if(null ==fileChooser.getSelectedFile().getPath()){
 					return;
 				}
+			
 				process.calculate(fileChooser.getSelectedFile().getPath());
 				kroList =process.getKroList();
 				krwList = process.getKrwList();
@@ -158,13 +171,33 @@ public class InitShellPanel extends JPanel{
 				//dataSet = CharLine.getInstance().getUserDataSet();
 				  XYSeries xyseriesKro = new XYSeries("kro");
 				  XYSeries xyseriesKrw = new XYSeries("krw");
+				StringBuilder  resultBuilder = new StringBuilder ();
+				resultBuilder.append("Sw:");				
+				for(double swOut:swList){
+					BigDecimal tempDecimal = new BigDecimal(swOut).setScale(3, BigDecimal.ROUND_CEILING);
+					resultBuilder.append(String.valueOf(tempDecimal.doubleValue())+" ");
+				}
+				resultBuilder.append("\n").append("Kro:");
 				for(int i = 0;i<kroList.size();i++) {
 					
-					xyseriesKro.add(swList.get(i).doubleValue(),kroList.get(i).doubleValue()); 
+					xyseriesKro.add(swList.get(i).doubleValue(),kroList.get(i).doubleValue());
+					BigDecimal tempDecimal = new BigDecimal(kroList.get(i).doubleValue()).setScale(3, BigDecimal.ROUND_CEILING);
+					resultBuilder.append(String.valueOf(tempDecimal.doubleValue())+" ");
+					//resultBuilder.append(kroList.get(i));
 				}
+				resultBuilder.append("\n").append("Krw:");
 				for(int i = 0;i<krwList.size();i++) {
-					xyseriesKrw.add(swList.get(i).doubleValue(),krwList.get(i).doubleValue()); 
+					xyseriesKrw.add(swList.get(i).doubleValue(),krwList.get(i).doubleValue());
+					BigDecimal tempDecimal = new BigDecimal(krwList.get(i).doubleValue()).setScale(5, BigDecimal.ROUND_CEILING);
+					resultBuilder.append(String.valueOf(tempDecimal.doubleValue())+" ");
+					
+					//resultBuilder.append(krwList.get(i));
 				}
+				//resultText.setName(resultBuilder.toString());
+				resultText.setText(resultBuilder.toString());
+				panelResult.updateUI();
+				panelParent.updateUI();
+								
 				dataSet = new XYSeriesCollection();
 				dataSet.addSeries(xyseriesKro);
 				dataSet.addSeries(xyseriesKrw);
@@ -173,6 +206,7 @@ public class InitShellPanel extends JPanel{
 				cp = new ChartPanel(charLine);
 				panelChar.add(cp,BorderLayout.CENTER);
 				panelChar.validate();
+				submitButton.setEnabled(false);
 				//cp.validate();
 				//panelParent.validate();
 				

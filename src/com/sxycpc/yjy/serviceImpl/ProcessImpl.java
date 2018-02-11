@@ -147,7 +147,9 @@ public class ProcessImpl implements InitProcess {
 		}
 	  	MultiLinearRegression mlr = new MultiLinearRegression(x1List,x2List,yList,0.001,1000000);  	
 	  	mlr.trainTheta();
-	  	paraAlpha = mlr.getTheta()[0]*(-1);
+	  	
+	  	//增加绝对值
+	  	paraAlpha = Math.abs(mlr.getTheta()[0]);
 	  	paraM = mlr.getTheta()[1];
 	  	paraN = mlr.getTheta()[2];
 	  	mlr.printTheta();
