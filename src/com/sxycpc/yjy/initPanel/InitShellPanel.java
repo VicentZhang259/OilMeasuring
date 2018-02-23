@@ -131,7 +131,7 @@ public class InitShellPanel extends JPanel{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int returnVal = getFile("XLS");
+				int returnVal = getFile("xls");
 				if(returnVal == 0) {
 					filePathText.setText(fileChooser.getSelectedFile().getPath());
 				}
