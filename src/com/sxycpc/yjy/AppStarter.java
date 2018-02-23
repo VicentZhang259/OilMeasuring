@@ -12,6 +12,7 @@ import com.sxycpc.yjy.initPanel.ToolsFrame;
 public class AppStarter {
 public static void main(String[] args) {
 	ToolsFrame.getInstance().setVisible(true);
+	System.out.print("");
 }
 
 }
